@@ -1,7 +1,7 @@
 <?php
 /**
  * This sniff prohibits the use of the ff methods
- * dd, var_dump
+ * dd, var_dump, eval, die, shell_exec
  * and checks if the ff: methods are safely used
  * print_r, var_export
  *
