@@ -18,7 +18,7 @@ class CustomStandard_Sniffs_Functions_DisallowDangerousFunctionsSniff implements
     public function register()
     {
         //T_STRING returns method names
-        return array(T_STRING, T_CLOSE_PARENTHESIS, T_TRUE);
+        return array(T_STRING, T_CLOSE_PARENTHESIS, T_TRUE,T_EVAL, T_EXIT);
     }//end register()
 
 
@@ -34,14 +34,14 @@ class CustomStandard_Sniffs_Functions_DisallowDangerousFunctionsSniff implements
     public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
-        $this->checkForDumpers($phpcsFile, $stackPtr);
+        $this->checkForBlacklistedMethods($phpcsFile, $stackPtr);
         $this->checkForDumpersThatCanBeUsedSafely($phpcsFile, $stackPtr);
     }//end process()
 
-    private function checkForDumpers(PHP_CodeSniffer_File $phpcsFile, $stackPtr) 
+    private function checkForBlacklistedMethods(PHP_CodeSniffer_File $phpcsFile, $stackPtr) 
     {
         $tokens = $phpcsFile->getTokens();
-        if  (in_array(strtolower($tokens[$stackPtr]['content']), $this->getDumpers())) {
+        if  (in_array(strtolower($tokens[$stackPtr]['content']), $this->getBlacklistedMethods())) {
             $error = 'please remove blacklisted function '. $tokens[$stackPtr]['content'] .'()';
             $data  = array(trim($tokens[$stackPtr]['content']));
             $phpcsFile->addError($error, $stackPtr, 'Found', $data);
@@ -87,9 +87,9 @@ class CustomStandard_Sniffs_Functions_DisallowDangerousFunctionsSniff implements
         }
     }
 
-    private function getDumpers()
+    private function getBlacklistedMethods()
     {
-        return array('dd','var_dump');
+        return array('dd','var_dump','die','eval','shell_exec');
     }
 
     

@@ -14,6 +14,12 @@ function MXample()
 	print_r('this is till ilelgal', false);
 	var_export('this is safe', true);
 	print_r('this is safe', true);
+
+	eval('xx');
+	shell_exec('xx');
+
+	//die
+	die('asds');
 }
 
 }
