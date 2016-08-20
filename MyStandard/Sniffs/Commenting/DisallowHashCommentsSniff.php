@@ -1,33 +1,10 @@
 <?php
 /**
- * This sniff prohibits the use of Perl style hash comments.
+ * This sniff prohibits the use of the ff methods
+ * dd, var_dump
+ * and checks if the ff: methods are safely used
+ * print_r, var_export
  *
- * PHP version 5
- *
- * @category  PHP
- * @package   PHP_CodeSniffer
- * @author    Your Name <you@domain.net>
- * @license   http://matrix.squiz.net/developer/tools/php_cs/licence BSD Licence
- * @version   SVN: $Id: coding-standard-tutorial.xml,v 1.9 2008-10-09 15:16:47 cweiske Exp $
- * @link      http://pear.php.net/package/PHP_CodeSniffer
- */
-
-/**
- * This sniff prohibits the use of Perl style hash comments.
- *
- * An example of a hash comment is:
- *
- * <code>
- *  # This is a hash comment, which is prohibited.
- *  $hello = 'hello';
- * </code>
- * 
- * @category  PHP
- * @package   PHP_CodeSniffer
- * @author    Your Name <you@domain.net>
- * @license   http://matrix.squiz.net/developer/tools/php_cs/licence BSD Licence
- * @version   Release: @package_version@
- * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class MyStandard_Sniffs_Commenting_DisallowHashCommentsSniff implements PHP_CodeSniffer_Sniff
 {
@@ -40,9 +17,8 @@ class MyStandard_Sniffs_Commenting_DisallowHashCommentsSniff implements PHP_Code
      */
     public function register()
     {
-        //T_STRING returns method names-
-        return array(T_STRING, T_COMMA, T_CLOSE_PARENTHESIS, T_TRUE);
-
+        //T_STRING returns method names
+        return array(T_STRING, T_CLOSE_PARENTHESIS, T_TRUE);
     }//end register()
 
 
@@ -58,22 +34,58 @@ class MyStandard_Sniffs_Commenting_DisallowHashCommentsSniff implements PHP_Code
     public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
-        
+        $this->checkForDumpers($phpcsFile, $stackPtr);
+        $this->checkForDumpersThatCanBeUsedSafely($phpcsFile, $stackPtr);
+    }//end process()
+
+    private function checkForDumpers(PHP_CodeSniffer_File $phpcsFile, $stackPtr) 
+    {
+        $tokens = $phpcsFile->getTokens();
         if  (in_array(strtolower($tokens[$stackPtr]['content']), $this->getDumpers())) {
             $error = 'please remove blacklisted function '. $tokens[$stackPtr]['content'] .'()';
             $data  = array(trim($tokens[$stackPtr]['content']));
             $phpcsFile->addError($error, $stackPtr, 'Found', $data);
         }
+    }
 
+    private function checkForDumpersThatCanBeUsedSafely(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
+    {
+        $tokens = $phpcsFile->getTokens();
         if  (in_array(strtolower($tokens[$stackPtr]['content']), $this->getDumpersThatCanBeUsedSafely())) {
-            $error = 'please make sure the 2nd paremeter is TRUE '. $tokens[$stackPtr]['content'] .'()';
-            $data  = array(trim($tokens[$stackPtr]['content']));
-            $phpcsFile->addError($error, $stackPtr, 'Found', $data);
+            
+            $openingParenthesisOfIllegalFunction = $tokens[$stackPtr+1];
+
+            if ($openingParenthesisOfIllegalFunction['type'] === 'T_OPEN_PARENTHESIS') {
+                $closingParenthesisMarker = $openingParenthesisOfIllegalFunction['parenthesis_closer'];
+                $closingParenthesis = null;
+
+                for ($i=1;empty($closingParenthesis); $i++) {
+                    $tokenUnderCheck = $tokens[$stackPtr + $i]; //['content']
+                    if ($tokenUnderCheck['type'] === 'T_CLOSE_PARENTHESIS' && $tokenUnderCheck['parenthesis_closer'] == $openingParenthesisOfIllegalFunction['parenthesis_closer']) {
+                        $closingParenthesis = $tokenUnderCheck;
+                        $closingParenthesisPointer = $stackPtr + $i;
+                        $returnBehaviourParamPointer = $this->getNonWhiteSpaceToLeftPointer($tokens, $stackPtr + $i);//$tokens[$closingParenthesisPointer - 1];
+                        
+                        if (($returnBehaviourParamPointer - $stackPtr) === 5 && $tokens[$returnBehaviourParamPointer]['type'] === 'T_TRUE') {
+                            return ;
+                        }
+                        $error = $tokens[$stackPtr]['content'] . '() is only allowed if 2nd parameter is TRUE ';
+                        $data  = array(trim($tokens[$stackPtr]['content']));
+                        $phpcsFile->addError($error, $stackPtr, 'Found', $data);
+                    }
+                }
+            }
         }
+    }
 
-    }//end process()
-
-    
+    private function getNonWhiteSpaceToLeftPointer($token, $currentPointer)
+    {
+        for ($i=1;true;$i++) {
+            if ($token[$currentPointer - $i]['type'] != 'T_WHITESPACE') {
+                return $currentPointer - $i;
+            } 
+        }
+    }
 
     private function getDumpers()
     {
@@ -85,7 +97,6 @@ class MyStandard_Sniffs_Commenting_DisallowHashCommentsSniff implements PHP_Code
     {
         return array('var_export','print_r');
     }
-
 
 }//end class
 

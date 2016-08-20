@@ -58,18 +58,11 @@ class MyStandard_Sniffs_Commenting_TraceSniff implements PHP_CodeSniffer_Sniff
     public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
-        
         $error = 'trace --->'. var_export($tokens[$stackPtr],true) .'<---'; //['content']
         $data  = array(trim($tokens[$stackPtr]['content']));
-        //$phpcsFile->addError($error, $stackPtr, 'Found', $data);   
+        $phpcsFile->addError($error, $stackPtr, 'Found', $data);   
 
     }//end process()
-
-    private function getBlacklistedFunctions()
-    {
-        return array('dd','var_dump','var_export','print_r');
-    }
-
 
 }//end class
 
