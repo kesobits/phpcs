@@ -1,1 +1,1 @@
-vendor/bin/phpcs --standard=MyStandard app 
+vendor/bin/phpcs --standard=CustomStandard app 
