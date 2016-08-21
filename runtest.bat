@@ -1,1 +1,1 @@
-vendor/bin/phpcs --standard=CustomStandard app 
+vendor/bin/phpcs --standard=CustomStandard app --report-width=800
