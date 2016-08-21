@@ -41,9 +41,6 @@ class CustomStandard_Sniffs_Functions_ArgumentTypeHintsSniff implements PHP_Code
                 $phpcsFile->addError($error, $stackPtr, 'Found', $data);
             }
         }
-
-        
-        
     }//end process()
 
     private function isArgumentTypeHintCountAndArgumentsCountEqual(PHP_CodeSniffer_File $phpcsFile, $pointerOfMethod)
